@@ -1,4 +1,4 @@
-#Sparse Affinity Propagation (C++/CUDA)
+<h1>Sparse Affinity Propagation (C++/CUDA)</h1>
 
 Implementation of the affinitypropagation a clustering.An algorithm that identifies exemplars among data points and forms clusters of data points around these exemplars.
 It operates by simultaneously considering all data point as potential exemplars and exchanging messages between data points until a good set of exemplars and clusters emerges.
@@ -35,5 +35,7 @@ msgnew = (dampfact)(msgold) + (1-dampfact)(msgnew)
 
 <b>convits and maxits</b>: Affinity propagation iteratively computes responsibilities and availabilities. The algorithm terminates if decisions for the exemplars and the cluster boundaries are unchanged for convits iterations, or if maxits iterations are reached.
 
+<h3>
 Expected output from toyDataSet
 2 2 2 2 2 2 6 6 6 6 2 6 2 6 6 19 19 19 19 19 19 2 19 19 6
+  </h3>
