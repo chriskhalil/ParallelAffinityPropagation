@@ -1,20 +1,16 @@
+#include <stdio.h>
 #include "AffinityPropagation.h"
 
-int main(int argc, char**argv) {
+using namespace Clustering;
 
+void AffinityPropagation::buildGraph(FILE* input) {
     cudaDeviceSynchronize();
 
-    // Allocate memory and initialize data
+    _graph = new Graph;
+    fscanf_s(input, "%d", &_graph->n);
+    _graph->outEdges = new Edges[_graph->n];
+    _graph->inEdges = new Edges[_graph->n];
+    vector<Edge>& edges = _graph->edges;
 
-    // Copy data to GPU
-
-    // Compute on GPU
-
-    // Copy data from GPU
-
-    // Free GPU memory
-
-    // Verify result
-
-    // Free memory
+    
 }
