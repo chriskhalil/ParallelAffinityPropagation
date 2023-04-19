@@ -1,9 +1,8 @@
 #include "AffinityPropagation.h"
 
-using namespace Clustering;
 
 void AffinityPropagation::update(double& variable, double newValue) {
-    variable = _damping * variable + (1.0 - _damping) * newValue;
+	variable = _damping * variable + (1.0 - _damping) * newValue;
 }
 
 void AffinityPropagation::updateResponsibilities() {
@@ -28,7 +27,7 @@ void AffinityPropagation::updateResponsibilities() {
         }
     }
 }
-void AffinityPropagation::updateAvailabilities() {
+void AffinityPropagation::updateAvailabilities(){
     for (int k{ 0 }; k < _graph->n; ++k) {
         Edges& edges{ _graph->inEdges[k] };
         size_t m{ edges.size() };
@@ -92,7 +91,7 @@ void AffinityPropagation::buildGraph(FILE* input) {
     vector<Edge>& edges = _graph->edges;
 
     // read similarity matrix
-    int i{ 0 }, j{ 0 };
+    int i{0}, j{0};
     double s = { 0 }, pref{ 0 };
     while (fscanf_s(input, "%d%d%lf", &i, &j, &s) != EOF) {
         if (i == j) { continue; }
@@ -101,11 +100,11 @@ void AffinityPropagation::buildGraph(FILE* input) {
 
     // calculate preferences
     // using the min - (max -min) of simlarities pref
-    double minValue = min_element(edges.begin(), edges.end())->similarity;
-    double maxValue = max_element(edges.begin(), edges.end())->similarity;
-    pref = 2 * minValue - maxValue;
+        sort(edges.begin(), edges.end());
+        int m = edges.size();
+        pref = (m % 2) ? edges[m / 2].similarity : (edges[m / 2 - 1].similarity + edges[m / 2].similarity) / 2.0;
 
-    for (int i{ 0 }; i < _graph->n; ++i) {
+        for (int i{ 0 }; i < _graph->n; ++i) {
         edges.push_back(Edge(i, i, pref));
     }
 
@@ -119,7 +118,7 @@ void AffinityPropagation::buildGraph(FILE* input) {
     }
 }
 
-vector<int> AffinityPropagation::Run(int maxit = 500, int convit = 10) {
+vector<int> AffinityPropagation::Run(int maxit=500, int convit=10) {
     vector<int> examplar(_graph->n, -1);
     for (int i = 0, nochange = 0; i < maxit && nochange < convit; ++i, ++nochange) {
         updateResponsibilities();
@@ -129,8 +128,13 @@ vector<int> AffinityPropagation::Run(int maxit = 500, int convit = 10) {
     return examplar;
 }
 
-AffinityPropagation::AffinityPropagation(FILE* input, double damping = 0.7) {
+AffinityPropagation::AffinityPropagation(FILE* input,double damping=0.7) {
     buildGraph(input);
+    // The damping factor. (0.5 <= damping < 1.0)
+    _damping = damping;
+}
+AffinityPropagation::AffinityPropagation(vector<Edge> input, double damping = 0.7) {
+    //buildGraph(input);
     // The damping factor. (0.5 <= damping < 1.0)
     _damping = damping;
 }
