@@ -6,11 +6,14 @@ void AffinityPropagation::update(double& variable, double newValue) {
 }
 
 void AffinityPropagation::updateResponsibilities() {
-    for (int i{ 0 }; i < _graph->n; ++i) {
-        Edges& edges = _graph->outEdges[i];
-        size_t m{ edges.size() };
-        double max1{ -DBL_MAX }, max2{ -DBL_MAX };
+    for (int i{ 0 }; i < _d_graph->Vertices; ++i) {
+
+        Edge** edges = _d_graph->outEdges[i];
+
+        size_t m{ (size_t)_d_graph->Vertices };
+        double max1{ -std::numeric_limits<double>::max() }, max2{ -std::numeric_limits<double>::max() };
         double argmax1{ -1 };
+
         for (int k{ 0 }; k < m; ++k) {
             double value{ edges[k]->similarity + edges[k]->availability };
             if (value > max1) { swap(max1, value); argmax1 = k; }
@@ -28,9 +31,11 @@ void AffinityPropagation::updateResponsibilities() {
     }
 }
 void AffinityPropagation::updateAvailabilities(){
-    for (int k{ 0 }; k < _graph->n; ++k) {
-        Edges& edges{ _graph->inEdges[k] };
-        size_t m{ edges.size() };
+    for (int k{ 0 }; k < _d_graph->Vertices; ++k) {
+
+        Edge** edges{ _d_graph->inEdges[k] };
+
+        size_t m{ (size_t)_d_graph->Vertices };
         // calculate sum of positive responsibilities
         auto sum{ 0.0 };
         for (int i{ 0 }; i < m - 1; ++i) {
@@ -47,9 +52,11 @@ void AffinityPropagation::updateAvailabilities(){
 }
 bool AffinityPropagation::updateExamplars(vector<int>& examplar) {
     auto changed{ false };
-    for (int i{ 0 }; i < _graph->n; ++i) {
-        Edges& edges{ _graph->outEdges[i] };
-        size_t m{ edges.size() };
+    for (int i{ 0 }; i < _d_graph->Vertices; ++i) {
+        Edge** edges{ _d_graph->outEdges[i] };
+
+        size_t m{ (size_t)_d_graph->Vertices };
+
         double maxValue{ -HUGE_VAL };
         int argmax{ i };
         for (int k{ 0 }; k < m; ++k) {
@@ -91,7 +98,7 @@ void AffinityPropagation::buildGraph(FILE* input) {
     vector<Edge>& edges = _graph->edges;
 
     // read similarity matrix
-    int i{0}, j{0};
+    int i{ 0 }, j{ 0 };
     double s = { 0 }, pref{ 0 };
     while (fscanf_s(input, "%d%d%lf", &i, &j, &s) != EOF) {
         if (i == j) { continue; }
@@ -100,11 +107,11 @@ void AffinityPropagation::buildGraph(FILE* input) {
 
     // calculate preferences
     // using the min - (max -min) of simlarities pref
-        sort(edges.begin(), edges.end());
-        int m = edges.size();
-        pref = (m % 2) ? edges[m / 2].similarity : (edges[m / 2 - 1].similarity + edges[m / 2].similarity) / 2.0;
+    sort(edges.begin(), edges.end());
+    int m = edges.size();
+    pref = (m % 2) ? edges[m / 2].similarity : (edges[m / 2 - 1].similarity + edges[m / 2].similarity) / 2.0;
 
-        for (int i{ 0 }; i < _graph->n; ++i) {
+    for (int i{ 0 }; i < _graph->n; ++i) {
         edges.push_back(Edge(i, i, pref));
     }
 
@@ -118,7 +125,7 @@ void AffinityPropagation::buildGraph(FILE* input) {
     }
 }
 
-vector<int> AffinityPropagation::Run(int maxit=500, int convit=10) {
+vector<int> AffinityPropagation::Run(int maxit = 500, int convit = 10) {
     vector<int> examplar(_graph->n, -1);
     for (int i = 0, nochange = 0; i < maxit && nochange < convit; ++i, ++nochange) {
         updateResponsibilities();
@@ -130,11 +137,7 @@ vector<int> AffinityPropagation::Run(int maxit=500, int convit=10) {
 
 AffinityPropagation::AffinityPropagation(FILE* input,double damping=0.7) {
     buildGraph(input);
-    // The damping factor. (0.5 <= damping < 1.0)
-    _damping = damping;
-}
-AffinityPropagation::AffinityPropagation(vector<Edge> input, double damping = 0.7) {
-    //buildGraph(input);
+    build_d_graph();
     // The damping factor. (0.5 <= damping < 1.0)
     _damping = damping;
 }
@@ -142,4 +145,36 @@ AffinityPropagation::~AffinityPropagation() {
     delete[] _graph->outEdges;
     delete[] _graph->inEdges;
     delete _graph;
+}
+
+void AffinityPropagation::build_d_graph() {
+
+    _d_graph = new d_Graph(_graph->n);
+
+    for (int i{ 0 }; i < _graph->edges.size(); ++i) {
+        _d_graph->edges[i] = new Edge(_graph->edges[i]);
+    }
+
+    int* indexes_source = new int[_d_graph->Vertices];
+    int* indexes_destination = new int[_d_graph->Vertices];
+
+    for (int i = 0; i < _d_graph->Vertices; ++i)
+    {
+        indexes_source[i] = indexes_destination[i] = 0;
+    }
+    for (int i = 0; i < _graph->edges.size(); ++i)
+    {
+        Edge* p = _d_graph->edges[i];
+
+            _d_graph->outEdges[p->source][indexes_source[p->source]] = p;
+            _d_graph->inEdges[p->destination][indexes_destination[p->destination]] = p;
+
+            ++indexes_source[p->source];
+            ++indexes_destination[p->destination];
+    }
+    delete[] indexes_source;
+    delete[] indexes_destination;
+
+
+
 }
